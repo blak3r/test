@@ -83,8 +83,8 @@ $installdefs = array (
                                     'to' => 'custom/modules/Asterisk',
                                     ),
                               array (
-                                  'from' => '<basepath>/SugarModules/service/',
-                                  'to' => 'custom/service/',
+                                  'from' => '<basepath>/SugarModules/service/callinize',
+                                  'to' => 'custom/service/callinize',
                               ),
 									
 							/** UNCOMMENT THIS SECTION IF YOU WANT TO OVERWRITE YOUR USER CUSTOMIZATIONS
