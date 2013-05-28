@@ -11,12 +11,13 @@
 
 ///class callinize_db {
 
-require_once('modules/Calls/Call.php');
-require_once('modules/Users/User.php');
+/*
 require_once('modules/Accounts/Account.php');
+require_once('modules/Users/User.php');
+require_once('modules/Calls/Call.php');
 require_once('modules/Leads/Lead.php');
 require_once('modules/Contacts/Contact.php');
-
+*/
     function findBeansByPhoneNumber($phone_number) {
 
     }
@@ -464,7 +465,7 @@ require_once('modules/Contacts/Contact.php');
                 $beans = make_bean_array_from_call_row($row);;
             }
             else {
-                $beans = find_beans($phone_number,$row,$current_user,"accounts,contacts,leads");
+                $beans = find_beans($phone_number,"accounts,contacts,leads",false,$current_user);
             }
 
             // When only one matching number, save the result in call record.
@@ -613,7 +614,7 @@ require_once('modules/Contacts/Contact.php');
      */
     function find_accounts($phone_number, $row, $current_user) {
         $innerResultSet = find_beans_db_query( "accounts", $GLOBALS['sugar_config']['asterisk_account_phone_fields'],
-                                               $phone_number, $row, $current_user);
+                                               $phone_number, $current_user);
         $accounts = convert_bean_to_simple_array("accounts", $innerResultSet, $current_user);
 
         return $accounts;
@@ -708,13 +709,13 @@ require_once('modules/Contacts/Contact.php');
      */
     function find_contacts($phone_number, $callRow, $current_user) {
         $innerResultSet = find_beans_db_query("contacts",  $GLOBALS['sugar_config']['asterisk_contact_phone_fields'],
-                                              $phone_number, $callRow, $current_user);
+                                              $phone_number, $current_user);
         $contacts = convert_bean_to_simple_array("contacts", $innerResultSet, $current_user);
 
         return $contacts;
     }
 
-    function find_beans($phone_number, $callRow, $current_user, $module_order = "accounts,contacts", $stop_on_find = false ) {
+    function find_beans($phone_number, $module_order = "accounts,contacts", $stop_on_find = false, $current_user ) {
         $beans = array();
 
         $modules = explode(',', $module_order );
@@ -728,7 +729,7 @@ require_once('modules/Contacts/Contact.php');
                 $phoneFields = $GLOBALS['sugar_config'][$configName];
             }
 
-            $result = find_beans_db_query($currModuleName, $phoneFields, $phone_number, $callRow, $current_user);
+            $result = find_beans_db_query($currModuleName, $phoneFields, $phone_number, $current_user);
             $beans = array_merge($beans, convert_bean_to_simple_array($currModuleName,$result,$current_user));
             if( $stop_on_find && count($beans) > 0 ) {
                 break;
@@ -746,8 +747,6 @@ require_once('modules/Contacts/Contact.php');
  * @return string
  */
 function build_link($moduleName, $id) {
-
-    //$GLOBALS['log']->fatal($id . " is the id passed in... ");
     global $sugar_config;
     if( !empty($moduleName) && !empty($id) ) {
         $moduleName = ucfirst($moduleName);
@@ -774,7 +773,7 @@ function convert_bean_to_simple_array($moduleName, $innerResultSet, $current_use
         if( !empty($beanRow['parent_name']) ) {
             $parentName = $beanRow['parent_name'];
             $parentId = $beanRow['parent_id'];
-            $parentModule = "accounts";
+            $parentModule = $beanRow['parent_module'];;
         }
 
         $beanName = $beanRow['bean_last_name'];
@@ -796,7 +795,6 @@ function convert_bean_to_simple_array($moduleName, $innerResultSet, $current_use
             'parent_link' => build_link($parentName, $parentId)
         );
 
-        $GLOBALS['log']->fatal("Heres the link: ".  $bean->bean_link);
         $beans[] = $bean;
     }
 
@@ -838,7 +836,7 @@ function make_bean_array_from_call_row($row) {
  * @param object $currentUser
  * @return mixed
  */
-function find_beans_db_query($module, $moduleFields, $phoneToFind, $callRow, $currentUser) {
+function find_beans_db_query($module, $moduleFields, $phoneToFind, $currentUser) {
     global $sugar_config;
 
     $module = strtolower($module);
@@ -875,6 +873,7 @@ function find_beans_db_query($module, $moduleFields, $phoneToFind, $callRow, $cu
            $moduleDependentSelectFields = "c.name as bean_last_name ";
         }
         else if( module == "leads") {
+            $GLOBALS['log']->fatal("adding parent name ");
             $moduleDependentSelectFields = ", account_name as parent_name ";
         }
 

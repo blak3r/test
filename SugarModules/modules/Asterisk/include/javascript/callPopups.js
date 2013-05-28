@@ -154,7 +154,7 @@ var YAAI = {
                     $('body').append(html);
                     YAAI.bindOpenPopupSingleMatchingContact(callboxid, entry);
                     $('#callbox_'+callboxid).find('.singlematchingcontact').show();
-                    $('#callbox_'+callboxid).find('.parent_name_box').show();
+                    // TODO this should set the account display right away if it's available instead of waiting till 2nd poll refresh
                     break;
 
                 default :
@@ -840,17 +840,11 @@ var YAAI = {
         
         // MULTIPLE OR NO MATCH --> Single case
         if( entry['beans'].length == 1 && singlematching.is(':hidden') ){
-            //remove the dropdown menu
-            // TODO: BR Make this configurable...
-            //$('#callbox_'+callboxid).find('.callbox_action').hide();
-
             //bind back the unrelate button
             YAAI.bindOpenPopupSingleMatchingContact(callboxid, entry);
             
             $('#callbox_'+callboxid).find('.nomatchingcontact').hide();
             $('#callbox_'+callboxid).find('.multiplematchingcontacts').hide();
-            $('#callbox_'+callboxid).find('.parent_name_box').show();  // <-- this is common to Account and Contact
-
             YAAI.refreshSingleMatchingContact(callboxid, entry);
         }
     },
@@ -864,12 +858,18 @@ var YAAI = {
         $('#callbox_'+callboxid).find('.singlematchingcontact td span.call_contacts').text(bean['bean_name']);
         
         //check if new contact has an account
-        if(bean['parent_name'] == null || bean['parent_name'].length > 0 ) {
-            $('#callbox_'+callboxid).find('.parent_name_box td a.company').hide();
+        if(bean['parent_name'] == null || bean['parent_name'].length <= 0 ) {
+            $('#callbox_'+callboxid).find('.parent_name_box').hide();
         }else{
-            $('#callbox_'+callboxid).find('.parent_name_box td a.company').attr('href', bean['parent_link']);
+            // TODO if link isn't set... then don't set
+            if( bean['parent_link'] != null ) {
+                $('#callbox_'+callboxid).find('.parent_name_box td a.company').attr('href', bean['parent_link']);
+            }
+            else {
+                $('#callbox_'+callboxid).find('.parent_name_box td a.company').attr('href', '#');
+            }
             $('#callbox_'+callboxid).find('.parent_name_box td a.company').text(bean['parent_name']);
-            $('#callbox_'+callboxid).find('.parent_name_box td a.company').show();
+            $('#callbox_'+callboxid).find('.parent_name_box').show();
         }
     },
 
@@ -923,28 +923,23 @@ var YAAI = {
         Handlebars.registerHelper('each', function(context, options) {
             if(typeof context != "undefined"){
                 var ret = "";
-
                 for(var i=0, j=context.length; i<j; i++) {
                     ret = ret + options.fn(context[i]);
                 }
-
                 return ret;
             }
-    
         });
     
         return context;
     },
     
     setCallBoxHeadColor : function (callboxid, entry){
-                
         if( entry['is_hangup']  ) {
             $("#callbox_"+callboxid+" .callboxhead").css("background-color", "#f99d39"); // an orange color
         }
         else {
             $("#callbox_"+callboxid+" .callboxhead").css("background-color", "#0D5995"); // a blue color
         }
-
     },
 
     setTransferButton : function(callboxid, entry ) {

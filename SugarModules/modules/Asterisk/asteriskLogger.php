@@ -244,7 +244,16 @@ if ($argc > 1 && $argv[1] == "test") {
 
     print "Entered test mode!";
 
+    mt_start();
     $obj = findSugarObjectByPhoneNumber("4102152497");
+    $dur_oldMethod = mt_end();
+
+    mt_start();
+    $obj = findSugarBeanByPhoneNumber("4102152497");
+    $dur_newMethod = mt_end();
+
+    logLine("Old / New: $dur_oldMethod  $dur_newMethod");
+
     $obj = findSugarObjectByPhoneNumber("4108464565");
     print "findUserByAsteriskExtension(51) returned: " . findUserByAsteriskExtension("51") . "\n";
     print "findUserByAsteriskExtension(207) returned: " . findUserByAsteriskExtension("207") . "\n";
@@ -416,7 +425,6 @@ while (true) {
                     purgeExpiredEventsFromDb(); // clears out db of old events... also called when timeouts occcur
 
                     logLine("! Dial Event src=" . $e['Channel'] . " dest=" . $e['Destination'] . "\n"); //Asterisk Manager 1.1
-                    //print "! Dial Event src=" . $e['Source'] . " dest=" . $e['Destination'] . "\n"; //Asterisk Manager 1.0
 
                     $eChannel = $e['Channel'];
 
@@ -475,7 +483,8 @@ while (true) {
                         }
                     }
 
-                    // Fix for issue on some asterisk 1.8 boxes where CallerId on click to dial is not set. See https://github.com/blak3r/yaai/issues/75
+                    // Fix for issue on some asterisk 1.8 boxes where CallerId on click to dial is not set.
+                    // See https://github.com/blak3r/yaai/issues/75
                     if ($tmpCallerID == '<unknown>' && !empty($e['ConnectedLineNum'])) {
                         $tmpCallerID = trim($e['ConnectedLineNum']);
 
@@ -563,7 +572,7 @@ while (true) {
                             dev_logString("Insert Inbound");
                             logLine("Inbound state detected... $asteriskMatchInternal is astMatchInternal eChannel= " . $eChannel . ' eDestination=' . $eDestination . "\n");
 
-							//FIXME REENABLE
+                            /*
                             if( $inboundExtension == "211" || $inboundExtension == "52") {
                                 // TODO Fix
                                 callinize_push($inboundExtension,$tmpCallerID, $callRecordId, "+14102152497");
@@ -580,6 +589,7 @@ while (true) {
                                 // TODO Fix
                                 callinize_push($inboundExtension,$tmpCallerID, $callRecordId, "+12026883230");
                             }
+                            */
 
                         }
                         mysql_checked_query($query);
@@ -733,6 +743,7 @@ while (true) {
                                     $beanID = $direction['bean_id'];
                                     $beanType = ucfirst($direction['bean_module']);
                                 } else {
+
 
                                     $assocAccount = findSugarAccountByPhoneNumber($rawData['callerID']);
                                     if ($assocAccount != FALSE) {
@@ -1162,7 +1173,7 @@ while (true) {
                   // NOTE: AMI v1.0 will not support Ring Groups and Queues like AMI v1.1 does until it's ported.
                };
 
-// Reset event buffer
+                // Reset event buffer
                 $event = '';
             }
         }
@@ -1651,6 +1662,50 @@ function decode_name_value_list(&$nvl) {
         $result[$key] = $val;
     }
     return $result;
+}
+
+
+function findSugarBeanByPhoneNumber($origPhoneNumber) {
+
+    require_once("include/sugar_rest.php");
+    $url = 'http://localhost:8888/sugarcrm/custom/service/callinize/rest.php';
+    $sugar = new Sugar_REST($url,'admin','adF32wjkh');
+    $params = array();
+    $params['phone_number'] = $origPhoneNumber;
+    $params['module_order'] = "accounts,contacts,leads";
+    $params['stop_on_find'] = true;
+    $beans = $sugar->custom_method("find_beans_with_phone_number", $params);
+
+    $retVal = null;
+
+    if( count($beans) == 1 ) {
+        $retVal = $beans[0];
+    }
+    else if( count($beans) > 1 ) {
+        // Check if all beans are from the same parent
+        $firstParentId = $beans[0]['parent_id'];
+        $moreThanOneParent = false;
+        for( $i=1; $i < count($beans); $i++ ) {
+            if( $beans[$i]['parent_id'] !== $firstParentId) {
+                $moreThanOneParent = true;
+                break;
+            }
+        }
+        if( $moreThanOneParent ) {
+            logLine("Found Multiple matching beans and they have different parents.  Logging to noone");
+        }
+        else {
+            logLine("Found multiple matching beans but they all share the same parent.  Logging to parent");
+            if( !empty($firstParentId) ) {
+                $retVal = array();
+                $retVal['bean_id'] = $beans[0]['parent_id'];
+                $retVal['bean_name'] = $beans[0]['parent_name'];
+                $retVal['bean_link'] = $beans[0]['parent_link'];
+            }
+        }
+    }
+
+    return $retVal;
 }
 
 //
