@@ -1,4 +1,5 @@
 <?php
+// SYNC TEST
 // This $config_meta array is used by configuratorGeneratorUtil.php to automatically generate the .tpl file html
 // The default type = "varchar" & by default it's 'required'
 // Put all the config params in order.  They're processed sequentially, each time the 'section' changes a new section header is placed in the template.
@@ -42,7 +43,9 @@ $config_meta['asterisk_block_button_enabled'] = array('default' => '0', 'section
 $config_meta['asterisk_transfer_button_enabled'] = array('default' => '1', 'section'=>'Popup UI');
 $config_meta['asterisk_relate_to_account_enabled'] = array('default' => '0', 'section'=>'Popup UI');
 $config_meta['asterisk_relate_to_contact_enabled'] = array('default' => '1', 'section'=>'Popup UI');
+$config_meta['asterisk_relate_to_lead_enabled'] = array('default' => 0, 'section'=>'Popup UI');
 $config_meta['asterisk_create_new_contact_enabled'] = array('default' => '1', 'section'=>'Popup UI');
+$config_meta['asterisk_create_new_lead_enabled'] = array('default' => 0, 'section'=>'Popup UI');
 //$config_meta['asterisk_max_popups'] = array('default' => '5', 'section'=>'Popup UI');
 //$config_meta['asterisk_filtered_call_states'] = array('default' => '', 'section'=>'Popup UI');
 //$config_meta['asterisk_window_height'] = array('default' => '', 'section'=>'Popup UI');
@@ -54,6 +57,7 @@ $config_meta['asterisk_callinize_api_organizationSecret'] = array('default' => '
 
 $config_meta['asterisk_contact_phone_fields'] = array('default' => 'phone_work,phone_home,phone_mobile,phone_other,assistant_phone', 'section' => 'Phone Fields');
 $config_meta['asterisk_account_phone_fields'] = array('default' => 'phone_office,phone_alternate', 'section' => 'Phone Fields');
+$config_meta['asterisk_lead_phone_fields'] = array('default' => 'phone_work,phone_home,phone_mobile,phone_other', 'section' => 'Phone Fields');
 
 
 $config_meta['asterisk_yaai_dev'] = array('default' => '0', 'section' => 'Developer');

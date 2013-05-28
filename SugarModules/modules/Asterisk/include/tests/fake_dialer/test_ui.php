@@ -2,9 +2,11 @@
 <head>
     <meta charset="utf-8" />
     <title>YAAI Fake Dialer</title>
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.0/themes/base/jquery-ui.css" />
-    <script src="http://code.jquery.com/jquery-1.8.2.js"></script>
-    <script src="http://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>
+<!--    <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.0/themes/base/jquery-ui.css" />-->
+    <link rel="stylesheet" href="custom/modules/Asterisk/include/javascript/offlineMode/jquery-ui.css" />
+    <script src="custom/modules/Asterisk/include/javascript/offlineMode/jquery-1.8.2.min.js"></script>
+<!--    <script src="http://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>-->
+    <script src="custom/modules/Asterisk/include/javascript/offlineMode/jquery-ui.js"></script>
     <style>
     .draggable { width: 100px; height: 100px; padding: 0.5em; float: left; margin: 10px 10px 10px 0; }
     .droppable { width: 150px; height: 150px; padding: 0.5em; float: left; margin: 10px; }

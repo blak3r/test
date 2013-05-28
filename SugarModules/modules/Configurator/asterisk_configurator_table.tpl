@@ -528,6 +528,20 @@
 
 <TR>
 
+    <td nowrap width="10%" class="dataLabel">{$MOD.LBL_ASTERISK_RELATE_TO_LEAD_ENABLED}
+      {if !empty($MOD.LBL_ASTERISK_RELATE_TO_LEAD_ENABLED_DESC)}
+          [<a href="#" title="{$MOD.LBL_ASTERISK_RELATE_TO_LEAD_ENABLED_DESC}">?</a>]:
+      {/if}
+    </td>
+    <td width="25%" class="dataField">
+    {if empty($config.asterisk_relate_to_lead_enabled )}
+        {assign var='asterisk_relate_to_lead_enabled' value=$asterisk_config.asterisk_relate_to_lead_enabled}
+    {else}
+        {assign var='asterisk_relate_to_lead_enabled' value=$config.asterisk_relate_to_lead_enabled}
+    {/if}
+        <input type='textbox' name='asterisk_relate_to_lead_enabled' size="45" value='{$asterisk_relate_to_lead_enabled}'>
+    </td>
+
     <td nowrap width="10%" class="dataLabel">{$MOD.LBL_ASTERISK_CREATE_NEW_CONTACT_ENABLED}
       {if !empty($MOD.LBL_ASTERISK_CREATE_NEW_CONTACT_ENABLED_DESC)}
           [<a href="#" title="{$MOD.LBL_ASTERISK_CREATE_NEW_CONTACT_ENABLED_DESC}">?</a>]:
@@ -540,6 +554,24 @@
         {assign var='asterisk_create_new_contact_enabled' value=$config.asterisk_create_new_contact_enabled}
     {/if}
         <input type='textbox' name='asterisk_create_new_contact_enabled' size="45" value='{$asterisk_create_new_contact_enabled}'>
+    </td>
+
+
+
+<TR>
+
+    <td nowrap width="10%" class="dataLabel">{$MOD.LBL_ASTERISK_CREATE_NEW_LEAD_ENABLED}
+      {if !empty($MOD.LBL_ASTERISK_CREATE_NEW_LEAD_ENABLED_DESC)}
+          [<a href="#" title="{$MOD.LBL_ASTERISK_CREATE_NEW_LEAD_ENABLED_DESC}">?</a>]:
+      {/if}
+    </td>
+    <td width="25%" class="dataField">
+    {if empty($config.asterisk_create_new_lead_enabled )}
+        {assign var='asterisk_create_new_lead_enabled' value=$asterisk_config.asterisk_create_new_lead_enabled}
+    {else}
+        {assign var='asterisk_create_new_lead_enabled' value=$config.asterisk_create_new_lead_enabled}
+    {/if}
+        <input type='textbox' name='asterisk_create_new_lead_enabled' size="45" value='{$asterisk_create_new_lead_enabled}'>
     </td>
 
 <TD>&nbsp;</TD><TD>&nbsp;</TD> </tr>
@@ -613,6 +645,24 @@
     </td>
 
 
+
+<TR>
+
+    <td nowrap width="10%" class="dataLabel">{$MOD.LBL_ASTERISK_LEAD_PHONE_FIELDS}
+      {if !empty($MOD.LBL_ASTERISK_LEAD_PHONE_FIELDS_DESC)}
+          [<a href="#" title="{$MOD.LBL_ASTERISK_LEAD_PHONE_FIELDS_DESC}">?</a>]:
+      {/if}
+    </td>
+    <td width="25%" class="dataField">
+    {if empty($config.asterisk_lead_phone_fields )}
+        {assign var='asterisk_lead_phone_fields' value=$asterisk_config.asterisk_lead_phone_fields}
+    {else}
+        {assign var='asterisk_lead_phone_fields' value=$config.asterisk_lead_phone_fields}
+    {/if}
+        <input type='textbox' name='asterisk_lead_phone_fields' size="45" value='{$asterisk_lead_phone_fields}'>
+    </td>
+
+<TD>&nbsp;</TD><TD>&nbsp;</TD> </tr>
 
 <TR><td colspan="4">&nbsp;&nbsp;<TR><TD colspan="4"><h3>Developer</h3></TD></tr>
 

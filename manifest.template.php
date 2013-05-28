@@ -67,7 +67,7 @@ $manifest = array (
                    'description' => 'Integrates Asterisk telephony features into SugarCRM.',
                    'icon' => '',
                    'is_uninstallable' => true,
-                   'name' => 'Asterisk SugarCRM Connector',
+                   'name' => 'Callinize for SugarCRM/Asterisk',
                    'published_date' => '@@PUBLISH_DATE@@',
                    'type' => 'module',
                    'version' => '@@VERSION@@',
@@ -82,6 +82,10 @@ $installdefs = array (
                                     'from' => '<basepath>/SugarModules/modules/Asterisk',
                                     'to' => 'custom/modules/Asterisk',
                                     ),
+                              array (
+                                  'from' => '<basepath>/SugarModules/service/',
+                                  'to' => 'custom/service/',
+                              ),
 									
 							/** UNCOMMENT THIS SECTION IF YOU WANT TO OVERWRITE YOUR USER CUSTOMIZATIONS
 					         array (

@@ -1837,7 +1837,6 @@ function findSugarObjectByPhoneNumber($aPhoneNumber) {
         $resultDecoded = $matchingContacts[0];
 
         if(count($matchingContacts) > 1) {
-            $foundMultipleAccounts = FALSE;
             $matchingAccounts = array();
             //logLine(print_r($resultDecoded,true));
             for ($i = 0; $i < count($matchingContacts); $i++) {

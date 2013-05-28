@@ -11,6 +11,12 @@
 
 ///class callinize_db {
 
+require_once('modules/Calls/Call.php');
+require_once('modules/Users/User.php');
+require_once('modules/Accounts/Account.php');
+require_once('modules/Leads/Lead.php');
+require_once('modules/Contacts/Contact.php');
+
     function findBeansByPhoneNumber($phone_number) {
 
     }
@@ -89,8 +95,47 @@
             $bean_module = preg_replace('/[^a-z0-9\-\. ]/i', '', $bean_module);
             $call_record = preg_replace('/[^a-z0-9\-\. ]/i', '', $call_record);
             // Workaround See Discussion here: https://github.com/blak3r/yaai/pull/20
+            $parent_module = null;
+            $parent_id = null;
+            $parent_name = null;
+            $parent_link = null;
+            $bean_link = build_link($bean_module, $bean_id);
 
-            $query = "update asterisk_log set bean_id=\"$bean_id\", bean_module=\"$bean_module\" where call_record_id=\"$call_record\"";
+            $bean_module = strtolower( $bean_module ) ;
+            if( $bean_module == 'contacts') {
+                $c = new Contact();
+                $c->retrieve($bean_id);
+                $bean_name = $c->name;
+                $bean_description = $c->description;
+                $parent_id = $c->account_id;
+                $parent_module = "accounts";
+                $parent_name = $c->account_name;
+
+                $GLOBALS["log"]->fatal(print_r($c,true));
+            }
+            else if( $bean_module == 'leads' ) {
+                $l = new Lead();
+                $l->retrieve($bean_id);
+                $bean_name = $l->name;
+                $bean_description = $l->description;
+                $parent_name = $l->account_name;
+
+            }
+            else if( $bean_module == "accounts" ) {
+                $a = new Account();
+                $a->retrieve($bean_id);
+                $bean_name = $a->name;
+                $bean_description = $a->description;
+            }
+            else {
+                $GLOBALS['log']->fatal("Unsupported Module: {$bean_module}!");
+            }
+
+            $query = "update asterisk_log set bean_id='{$bean_id}', bean_module='{$bean_module}', bean_name='{$bean_name}', bean_link='{$bean_link}', bean_description='{$bean_description}', "
+                     . " parent_id='{$parent_id}', parent_module='{$parent_module}', parent_name='{$parent_name}', parent_link='{$parent_link}' "
+                     . " where call_record_id='{$call_record}'";
+
+//            $GLOBALS['log']->fatal($query);
 
             $GLOBALS['current_user']->db->query($query, false);
             if ($GLOBALS['current_user']->db->checkError()) {
@@ -108,11 +153,11 @@
             foreach ($focus->contacts->getBeans() as $contact) {
                 $focus->contacts->delete($call_record, $contact->id);
             }
-            foreach ($focus->contacts->getBeans() as $contact) {
-                $focus->accounts->delete($call_record, $contact->id);
+            foreach ($focus->accounts->getBeans() as $account) {
+                $focus->accounts->delete($call_record, $account->id);
             }
-            foreach ($focus->contacts->getBeans() as $contact) {
-                $focus->leads->delete($call_record, $contact->id);
+            foreach ($focus->leads->getBeans() as $lead) {
+                $focus->leads->delete($call_record, $lead->id);
             }
 
             switch($bean_module) {
@@ -401,7 +446,7 @@
      * @param array $result_set Array of calls from database
      * @param object $current_user SugarCRM current_user object allows DB access
      * @param array $mod_strings SugarCRM module strings
-     *
+     * @return array
      */
     function build_getCalls_item_list($result_set, $current_user, $mod_strings) {
 
@@ -415,28 +460,17 @@
             $contacts = array();
 
             // Dont fetch contacts if it's already known this is already been related to another module.
-            if( empty($row['bean_module']) || $row['bean_module'] == "contacts") {
-                $contacts = find_contacts($phone_number, $row, $current_user);
+            if( !empty($row['bean_module']) && !empty($row['bean_id']) ) {
+                $beans = make_bean_array_from_call_row($row);;
+            }
+            else {
+                $beans = find_beans($phone_number,$row,$current_user,"accounts,contacts,leads");
             }
 
-            $accounts = array();
-            if( count($contacts) == 0 ) {
-                $accounts = find_accounts($phone_number, $row, $current_user);
+            // When only one matching number, save the result in call record.
+            if( count($beans) == 1 ) {
+                setBeanID( $row['call_record_id'], $beans[0]['bean_module'], $beans[0]['bean_id']);
             }
-
-
-            // TODO REFACTOR
-            // If only one contact is returned, we set db column so we don't re-perform expensive phone number lookup qry anymore
-            if( empty( $row['bean_id'] ) && count($contacts) == 1 ) {
-                // logLine("Updating db, " . $callRow['call_record_id'] . "  contact:" . $contacts[0]['contact_id'] . "\n", "c:/callListener.txt");
-                setBeanID($row['call_record_id'], "contacts", $contacts[0]['contact_id'] );
-            }
-            else if( empty( $row['bean_id'] ) && count($accounts) == 1 ) {
-                // logLine("Updating db, " . $callRow['call_record_id'] . "  contact:" . $contacts[0]['contact_id'] . "\n", "c:/callListener.txt");
-                setBeanID($row['call_record_id'], "accounts", $accounts[0]['company_id'] );
-            }
-
-            // TODO Call SetBeanId here when it's the acount case!
 
             $call = array(
                 'id' => $row['id'],
@@ -446,9 +480,8 @@
                 'call_record_id' => $row['call_record_id'],
                 'phone_number' => $phone_number,
                 'timestamp_call' => $row['timestamp_call'],
-                'title' => get_title($contacts, $phone_number, $state, $mod_strings),
-                'contacts' => $contacts,
-                'accounts' => $accounts,
+                'title' => get_title($beans, $phone_number, $state, $mod_strings),
+                'beans' => $beans,
                 'call_type' => $call_direction['call_type'],
                 'direction' => $call_direction['direction'],
                 'duration' => get_duration($row),
@@ -713,9 +746,12 @@
  * @return string
  */
 function build_link($moduleName, $id) {
+
+    //$GLOBALS['log']->fatal($id . " is the id passed in... ");
     global $sugar_config;
     if( !empty($moduleName) && !empty($id) ) {
-        return $sugar_config['site_url'] . "/index.php?module=$moduleName&action=DetailView&record=$id";
+        $moduleName = ucfirst($moduleName);
+        return $sugar_config['site_url'] . "/index.php?module=$moduleName&action=DetailView&record={$id}";
     }
     return null;
 }
@@ -746,24 +782,50 @@ function convert_bean_to_simple_array($moduleName, $innerResultSet, $current_use
             $beanName = $beanRow['bean_first_name'] . " " . $beanRow['bean_last_name'];
         }
 
+        $beanId = $beanRow['bean_id'];
+
         $bean = array(
             'bean_module' => $moduleName,
-            'bean_id' => $beanRow['bean_id'],
+            'bean_id' => $beanId,
             'bean_name' => $beanName,
             'bean_description' => $beanRow['bean_description'],
-            'bean_link' => build_link($moduleName, $beanRow['bean_id']),
+            'bean_link' => build_link($moduleName,$beanId),
             'parent_name' => $parentName,
             'parent_module' => $parentModule,
             'parent_id' => $parentId,
             'parent_link' => build_link($parentName, $parentId)
         );
-        // PRINT
-        print "Merging in: $beanName\n";
+
+        $GLOBALS['log']->fatal("Heres the link: ".  $bean->bean_link);
         $beans[] = $bean;
     }
 
     return $beans;
 }
+
+/**
+ * retrieves the saved results from the asterisk_log row for this call.
+ * provides same type of return object as find_beans would.
+ * @param $row
+ * @return Array an array of beans
+ */
+function make_bean_array_from_call_row($row) {
+    $beans = array();
+    $bean = array(
+        'bean_module' => $row['bean_module'],
+        'bean_id' => $row['bean_id'],
+        'bean_name' => $row['bean_name'],
+        'bean_description' => $row['bean_description'],
+        'bean_link' => $row['bean_link'],
+        'parent_name' => $row['parent_name'],
+        'parent_module' => $row['parent_module'],
+        'parent_id' => $row['parent_id'],
+        'parent_link' => $row['parent_link']
+    );
+    $beans[] = $bean;
+    return $beans;
+}
+
 
 
 /**
@@ -799,6 +861,7 @@ function find_beans_db_query($module, $moduleFields, $phoneToFind, $callRow, $cu
                            . " left join accounts a on (ac.account_id=a.id) and (a.deleted='0' or a.deleted is null)";
         }
 
+
         $joinCstm = "";
         // Assumption: if _c is in the field list, we assume that a _cstm table must exist.
         if( preg_match('/\B_c\b/', $moduleFields ) ) {
@@ -810,6 +873,9 @@ function find_beans_db_query($module, $moduleFields, $phoneToFind, $callRow, $cu
         $moduleDependentSelectFields = "c.first_name as bean_first_name, c.last_name as bean_last_name ";
         if( $module == "accounts" ) {
            $moduleDependentSelectFields = "c.name as bean_last_name ";
+        }
+        else if( module == "leads") {
+            $moduleDependentSelectFields = ", account_name as parent_name ";
         }
 
         $selectPortion = "SELECT c.id as bean_id, $moduleDependentSelectFields, c.description as bean_description"
@@ -914,7 +980,7 @@ REGEXP '%s$' = 1
      *   1) multiple matches found
      *   2) single match found 3) no matches found
      *
-     * @param array $contacts the contacts this matches, used to say whether or multiple contacts match or not
+     * @param array $beans the contacts that matches, used to say whether or multiple contacts match or not
      * @param string $phone_number 10 digit US telephone number
      * @param string $state the call state
      * @param array $mod_strings
@@ -922,17 +988,17 @@ REGEXP '%s$' = 1
      * @return string title
      *
      */
-    function get_title($contacts, $phone_number, $state, $mod_strings) {
+    function get_title($beans, $phone_number, $state, $mod_strings) {
 
         // TODO Needs to be updated to support Accounts
 
-        switch (count($contacts)) {
+        switch (count($beans)) {
             case 0:
                 $title = $phone_number;
                 break;
 
             case 1:
-                $title = $contacts[0]['contact_full_name'];
+                $title = $beans[0]['bean_name'];
                 break;
 
             default:
