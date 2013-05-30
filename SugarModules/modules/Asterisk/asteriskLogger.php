@@ -1092,7 +1092,6 @@ while (true) {
                             $result = mysql_checked_query($query);
                             while ($call_rec_id = mysql_fetch_array($result)) {
                                 logLine("Deleting Call Record: " . $call_rec_id['call_record_id']);
-                                //pause(30000);
                                 deleteCall($call_rec_id['call_record_id']);
                             }
                         } else if($direction['direction'] == "O") {
