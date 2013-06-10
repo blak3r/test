@@ -247,39 +247,92 @@ var YAAI = {
         });
     },
 
+    bindTransferButton : function(callboxid, entry){
+        $('#callbox_'+callboxid).find('.transfer_panel').button( {
+            icons: {
+                primary: 'ui-icon-transfer',
+                secondary: null
+            }
+        }).on("click", function() {
+                YAAI.log("Binding Transfer Button action");
+                YAAI.showTransferMenu(entry);
+        });
+    },
+
+    showTransferButton : function(callboxid,entry) {
+        $('#callbox_'+callboxid).find('.transfer_panel').show();
+    },
+    hideTransferButton : function(callboxid, entry) {
+        $('#callbox_'+callboxid).find('.transfer_panel').hide();
+    },
+    bindOperatorPanel : function(callboxid){
+        YAAI.log("Binding FOP Panel");
+        $('#callbox_'+callboxid).find('.operator_panel').button({
+            icons: {
+                primary: 'ui-icon-custom-phone',
+                secondary: null
+            }
+        }).on("click", function(){
+            $.fancybox({
+                href : YAAI.fop2URL + '?exten=' + YAAI.fop2UserID + '&pass=' + YAAI.fop2Password,
+                type : 'iframe',
+                padding : 5,
+                showCloseButton : true,
+                afterClose : function() {
+                    window.location.href=window.location.href
+                }
+            });
+        }).show();
+    },
+
+    bindCheckCallBoxInputKey : function(callboxid, entry){
+        $('#callbox_'+callboxid).find('.transfer_button').keydown(function(event){
+            YAAI.checkCallBoxInputKey(event, callboxid, entry);
+        });
+
+    },
+
+
     bindActionDropdown : function(callboxid,entry){
         YAAI.log("Binding Action Dropdown for "+ callboxid);
 
         var dropdownDiv = "#dropdown-1_callbox_"+callboxid;
 
-         $('#callbox_'+callboxid).find('.callbox_action').button({
-                icons: {
-                    primary: "ui-icon-flag",
-                    secondary: "ui-icon-triangle-1-s"
-                },
-                text: false
-         })
-         .show()
-         .on("click",function() {
-             $(dropdownDiv).slideDown("fast");
-             $(dropdownDiv).css( "margin-left", "50px");
-         })
-         .on("mouseenter",function() {
-             $(dropdownDiv).css( "margin-left", "50px"); // Needed in ie8 only...
-         })
-         .on("mouseleave", function () {
-            setTimeout(hidepanel, 600);
-         });
+        $('#callbox_'+callboxid).find('.callbox_action').button({
+            icons: {
+                primary: "ui-icon-flag",
+                secondary: "ui-icon-triangle-1-s"
+            },
+            text: false
+        })
+        .show()
+        .on("click",function() {
+            $(dropdownDiv).slideDown("fast");
+            $(dropdownDiv).css( "margin-left", "50px");
+        })
+        .on("mouseenter",function() {
+            $(dropdownDiv).css( "margin-left", "50px"); // Needed in ie8 only...
+            clearTimeout($(dropdownDiv).data('timeoutId1'));
+            clearTimeout($(dropdownDiv).data('timeoutId2'));
+            console.log("clearing timeouts... button");
+        })
+        .on("mouseleave", function () {
+            var timeoutId1 = setTimeout(hidepanel, 600);
+            $(dropdownDiv).data('timeoutId1', timeoutId1);
+                console.log("set timeouts... button");
+        });
 
+        // This is for mouse events over the actual dropdowns...
+        $(dropdownDiv).mouseleave(function() { var timeoutId2 = setTimeout(hidepanel, 600); $(dropdownDiv).data('timeoutId2', timeoutId2); console.log("set timeouts... div"); });
+        $(dropdownDiv).mouseenter(function() { clearTimeout($(dropdownDiv).data('timeoutId1')); clearTimeout($(dropdownDiv).data('timeoutId2')); console.log("clearing timeouts... div"); } );
 
-        $(dropdownDiv).mouseleave(function() { setTimeout(hidepanel, 600); });
 
         function hidepanel() {
-            // TODO: the :hover if statement below makes dropdowns in IE8 not work, but without it the hover doesn't work.
-            // Code commented below caused issues with IE8, Safe to delete if no issues crop up with other browsers
-            if ($(dropdownDiv).is(':hover') === false) {
-                $(dropdownDiv).slideUp();
-            }
+            // 2013-05-21: http://stackoverflow.com/questions/1273566/how-do-i-check-if-the-mouse-is-over-an-element-in-jquery
+            // Because IE8 doesn't support: ($(dropdownDiv).is(':hover') === false) {
+            // Had to do all the setTimeout and clearTimeout stuff above.  What makes this a little more complicated is there are two different
+            // div's we want to keep the dropdowns shown for... the button that makes them appear and the actual div that's shown.
+            $(dropdownDiv).slideUp();
         }
 
 
@@ -337,90 +390,44 @@ var YAAI = {
         }
 
         /*
-        if( window.yaai_relate_to_contact_enabled ) {
-            YAAI.log("  Adding Relate to Contact");
-            // TODO Remove line below... for debugging
-            YAAI.log( $(dropdownDiv+" ul").length + " was found?");
+         if( window.yaai_relate_to_contact_enabled ) {
+         YAAI.log("  Adding Relate to Contact");
+         // TODO Remove line below... for debugging
+         YAAI.log( $(dropdownDiv+" ul").length + " was found?");
 
-            $(dropdownDiv+" ul").append("<li><a href='#' class='relate_to_contact'>"+entry['mod_strings']['RELATE_TO_CONTACT']+"</a></li>");
-            $(dropdownDiv+" ul a.relate_to_contact").on("click", entry, function() {
-                YAAI.openContactRelatePopup(entry)
-            });
-        }
-        // TODO create
-        if( window.yaai_relate_to_account_enabled ) {
-            YAAI.log("  Adding Relate to Account");
-            $(dropdownDiv+" ul").append("<li><a href='#' class='relate_to_account'>"+entry['mod_strings']['RELATE_TO_ACCOUNT']+"</a></li>");
-            $(dropdownDiv+" ul a.relate_to_account").on("click", entry, function() {
-                YAAI.openAccountRelatePopup(entry);
-            });
-        }
+         $(dropdownDiv+" ul").append("<li><a href='#' class='relate_to_contact'>"+entry['mod_strings']['RELATE_TO_CONTACT']+"</a></li>");
+         $(dropdownDiv+" ul a.relate_to_contact").on("click", entry, function() {
+         YAAI.openContactRelatePopup(entry)
+         });
+         }
+         // TODO create
+         if( window.yaai_relate_to_account_enabled ) {
+         YAAI.log("  Adding Relate to Account");
+         $(dropdownDiv+" ul").append("<li><a href='#' class='relate_to_account'>"+entry['mod_strings']['RELATE_TO_ACCOUNT']+"</a></li>");
+         $(dropdownDiv+" ul a.relate_to_account").on("click", entry, function() {
+         YAAI.openAccountRelatePopup(entry);
+         });
+         }
 
-        if( window.yaai_create_new_contact_enabled ) {
-            YAAI.log("  Adding Create New Contact");
-            $(dropdownDiv+" ul").append("<li><a href='#' class='create_contact'>"+entry['mod_strings']['CREATE_NEW_CONTACT']+"</a></li>");
-            $(dropdownDiv+" ul a.create_contact").on("click", entry, function() {
-                YAAI.createContact(entry)
-            });
-        }
+         if( window.yaai_create_new_contact_enabled ) {
+         YAAI.log("  Adding Create New Contact");
+         $(dropdownDiv+" ul").append("<li><a href='#' class='create_contact'>"+entry['mod_strings']['CREATE_NEW_CONTACT']+"</a></li>");
+         $(dropdownDiv+" ul a.create_contact").on("click", entry, function() {
+         YAAI.createContact(entry)
+         });
+         }
 
-        if( window.yaai_block_button_enabled ) {
-            YAAI.log("  Adding Block Button Enabled");
-            $(dropdownDiv+" ul").append("<li><a href='#' class='block_number'>"+entry['mod_strings']['BLOCK_NUMBER']+"</a></li>");
-            $(dropdownDiv+" ul a.block_number").on("click", {
-                entry: entry,
-                callboxid: callboxid
-            }, function() {
-                YAAI.showBlockNumberDialog(callboxid, entry)
-            });
-        }
-        */
-    },
-
-    bindTransferButton : function(callboxid, entry){
-        $('#callbox_'+callboxid).find('.transfer_panel').button( {
-            icons: {
-                primary: 'ui-icon-transfer',
-                secondary: null
-            }
-        }).on("click", function() {
-                YAAI.log("Binding Transfer Button action");
-                YAAI.showTransferMenu(entry);
-        });
-    },
-    showTransferButton : function(callboxid,entry) {
-        $('#callbox_'+callboxid).find('.transfer_panel').show();
-    },
-    hideTransferButton : function(callboxid, entry) {
-        $('#callbox_'+callboxid).find('.transfer_panel').hide();
-    },
-
-    bindOperatorPanel : function(callboxid){ 
-        YAAI.log("Binding FOP Panel");
-        $('#callbox_'+callboxid).find('.operator_panel').button({
-            icons: {
-                primary: 'ui-icon-custom-phone', 
-                secondary: null
-            }
-        }).on("click", function(){
-            $.fancybox({
-                href : YAAI.fop2URL + '?exten=' + YAAI.fop2UserID + '&pass=' + YAAI.fop2Password,
-                type : 'iframe',
-                padding : 5,
-                showCloseButton : true,
-                afterClose : function() {
-                    window.location.href=window.location.href
-                }
-            }); 
-        }).show();
-    },
-
-     
-    bindCheckCallBoxInputKey : function(callboxid, entry){
-        $('#callbox_'+callboxid).find('.transfer_button').keydown(function(event){
-            YAAI.checkCallBoxInputKey(event, callboxid, entry);
-        }); 
-        
+         if( window.yaai_block_button_enabled ) {
+         YAAI.log("  Adding Block Button Enabled");
+         $(dropdownDiv+" ul").append("<li><a href='#' class='block_number'>"+entry['mod_strings']['BLOCK_NUMBER']+"</a></li>");
+         $(dropdownDiv+" ul a.block_number").on("click", {
+         entry: entry,
+         callboxid: callboxid
+         }, function() {
+         YAAI.showBlockNumberDialog(callboxid, entry)
+         });
+         }
+         */
     },
 
     // This is the icon next to the name.

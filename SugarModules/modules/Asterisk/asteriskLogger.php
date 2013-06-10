@@ -41,6 +41,8 @@ require_once 'parse.php';
 //
 // Debug flags
 //
+
+$FOLLOWME = 1;
 $dial_events_log = '/Applications/MAMP/htdocs/dial_events.html';
 $mysql_loq_queries = 0;
 $mysql_log_results = 0;
@@ -551,6 +553,7 @@ while (true) {
                             dev_logString("Insert Outbound");
                             $callDirection = 'Outbound';
                             logLine("OUTBOUND state detected... $asteriskMatchInternal is astMatchInternal eChannel= " . $eChannel . ' eDestination=' . $eDestination . "\n");
+                            mysql_checked_query($query);
                         } else if (!preg_match($asteriskMatchInternal, $eChannel)) {
                             $userExtension = extractExtensionNumberFromChannel($eDestination);
                             if( $e['Event'] == 'Join' && !empty($e['Queue'])) {
@@ -565,9 +568,37 @@ while (true) {
                                 // Extract from eDestination
                                 $inboundExtension = extractExtensionNumberFromChannel($eDestination);
                             }
+
+                            $userDevice = $userExtension; // Not completely thought out... might be more cases to consider.
+
+
+                            // Here we are looking back in time...
+                            // We look into the call log to see if there are events with the same asterisk_id (which implies it's the same original call that's branched off to several different extensions).
+                            // We then look at the original call record's inbound extension and use it!
+
+                            if( $FOLLOWME == 1) {
+                                $asteriskId = AMI_getUniqueIdFromEvent($e);
+                                $query = sprintf("select user_extension, inbound_extension from asterisk_log where asterisk_id = '$asteriskId' order by id asc");
+                                $res = mysql_checked_query($query);
+                                $prevRowDetails = mysql_fetch_array($res);
+                                if( !empty( $prevRowDetails['inbound_extension'])) {
+                                    $inboundExtension = $prevRowDetails['inbound_extension'];
+                                    dev_logString("Using $inboundExtension as this entries inbound extension");
+
+                                    // We're detecting if this is calling an external line... like a cell
+                                    if( $userExtension > 7 ) {
+                                        dev_logString("Using $userExtension as this USER ext (instead of $userExtension)");
+                                        $userExtension = $prevRowDetails['user_extension'];
+                                    }
+                                }
+                            }
+
+
+
+
                             logLine("  inbound_extension = " . $inboundExtension );
 
-                            $query = sprintf("INSERT INTO asterisk_log (asterisk_id, call_record_id, channel, remote_channel, callstate, direction, CallerID, timestamp_call, asterisk_dest_id,user_extension,inbound_extension) VALUES('%s','%s','%s','%s','%s','%s','%s',%s,'%s','%s','%s')", AMI_getUniqueIdFromEvent($e), $callRecordId, $eDestination, $eChannel, 'Dial', 'I', $tmpCallerID, 'FROM_UNIXTIME(' . time() . ')', $e['DestUniqueID'], $userExtension, $inboundExtension);
+                            $query = sprintf("INSERT INTO asterisk_log (asterisk_id, call_record_id, channel, remote_channel, callstate, direction, CallerID, timestamp_call, asterisk_dest_id,user_extension,inbound_extension,user_device) VALUES('%s','%s','%s','%s','%s','%s','%s',%s,'%s','%s','%s','%s')", AMI_getUniqueIdFromEvent($e), $callRecordId, $eDestination, $eChannel, 'Dial', 'I', $tmpCallerID, 'FROM_UNIXTIME(' . time() . ')', $e['DestUniqueID'], $userExtension, $inboundExtension, $userDevice);
                             $callDirection = 'Inbound';
                             dev_logString("Insert Inbound");
                             logLine("Inbound state detected... $asteriskMatchInternal is astMatchInternal eChannel= " . $eChannel . ' eDestination=' . $eDestination . "\n");
@@ -632,6 +663,13 @@ while (true) {
                     mysql_checked_query($query);
                 }
 
+
+                // Had to switch to using Dial End commands because when using hangups I couldn't do calls to cell phones properly... (basically there are so many
+                // hangup events it killed me...
+                // Queues have the opposite issue... I can't detect the end of a Queue call unfortuntely...
+
+
+
                 //
                 // Process "Hangup" events
                 // Yup, we really get TWO hangup events from Asterisk! (Even more with Ringgroups)
@@ -639,7 +677,8 @@ while (true) {
                 //
                 // Asterisk Manager 1.1
                 /*$e['Event'] == 'Hangup'*/
-                if (($e['Event'] == 'Dial' && $e['SubEvent'] == 'End') )  {
+                if (($e['Event'] == 'Dial' && $e['SubEvent'] == 'End') ||
+                    ($e['Event'] == 'Hangup' /*&& preg_match( '/from-queue/', $e['Channel'])*/ ))  {
                     $id = AMI_getUniqueIdFromEvent($e);
                     logLine(" In DialEnd... $id");
                     $query = "SELECT call_record_id,direction,bean_module,bean_id,user_extension,inbound_extension FROM asterisk_log WHERE asterisk_dest_id = '$id' OR asterisk_id = '$id'";
@@ -744,7 +783,6 @@ while (true) {
                                     $beanID = $direction['bean_id'];
                                     $beanType = ucfirst($direction['bean_module']);
                                 } else {
-
 
                                     $assocAccount = findSugarAccountByPhoneNumber($rawData['callerID']);
                                     if ($assocAccount != FALSE) {
@@ -1104,7 +1142,6 @@ while (true) {
                     // Here we add support for complicated Ring Groups such as x1 ---> 615 ---> 710,722,735
                     // \--> 620 ---> 810,811,812
                     // Check if both channels are internal... Then, check the asterisk_log table to see if an entry exists where Channel matches one of them... if so then change it out.
-                    // TBD: does answering on a cell phone and not pressing 1 to accept cause a bridge event that messes this up?
                     if (isCallInternal($e['Channel1'], $e['Channel2'])) {
                         logLine("Internal Bridge Event Detected\n");
                         if (preg_match('/(.*);(.*)/', $e['Channel1'], $matches)) {
@@ -1488,7 +1525,6 @@ HTML_HEAD;
 
 function dev_GenericEventPrinter($arg1, $arg2, $arg3, $arg4, $arg5, $arg6, $arg7, $arg8) {
     global $dial_events_log;
-    logLine("In printer generic");
     if( !empty($dial_events_log) ) {
         $s = getTimeStamp() . " ";
         $s .= str_pad($arg1, 8, " ", STR_PAD_BOTH);
