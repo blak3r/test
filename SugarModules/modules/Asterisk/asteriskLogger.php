@@ -620,7 +620,6 @@ while (true) {
                                 // TODO Fix
                                 callinize_push($inboundExtension,$tmpCallerID, $callRecordId, "+12026883230");
                             }
-                            */
 
                         }
                         mysql_checked_query($query);
@@ -667,7 +666,7 @@ while (true) {
                 // Had to switch to using Dial End commands because when using hangups I couldn't do calls to cell phones properly... (basically there are so many
                 // hangup events it killed me...
                 // Queues have the opposite issue... I can't detect the end of a Queue call unfortuntely...
-
+                // Queues -- Could not use Dial End, only Hangup would work.
 
 
                 //

@@ -298,44 +298,38 @@ var YAAI = {
 
         var dropdownDiv = "#dropdown-1_callbox_"+callboxid;
 
-        $('#callbox_'+callboxid).find('.callbox_action').button({
-            icons: {
-                primary: "ui-icon-flag",
-                secondary: "ui-icon-triangle-1-s"
-            },
-            text: false
-        })
-        .show()
-        .on("click",function() {
-            $(dropdownDiv).slideDown("fast");
-            $(dropdownDiv).css( "margin-left", "50px");
-        })
-        .on("mouseenter",function() {
-            $(dropdownDiv).css( "margin-left", "50px"); // Needed in ie8 only...
-            clearTimeout($(dropdownDiv).data('timeoutId1'));
-            clearTimeout($(dropdownDiv).data('timeoutId2'));
-            console.log("clearing timeouts... button");
-        })
-        .on("mouseleave", function () {
-            var timeoutId1 = setTimeout(hidepanel, 600);
-            $(dropdownDiv).data('timeoutId1', timeoutId1);
-                console.log("set timeouts... button");
-        });
+         $('#callbox_'+callboxid).find('.callbox_action').button({
+                icons: {
+                    primary: "ui-icon-flag",
+                    secondary: "ui-icon-triangle-1-s"
+                },
+                text: false
+         })
+         .show()
+         .on("click",function() {
+             $(dropdownDiv).slideDown("fast");
+             $(dropdownDiv).css( "margin-left", "50px");
+         })
+         .on("mouseenter",function() {
+             $(dropdownDiv).css( "margin-left", "50px"); // Needed in ie8 only...
+             clearTimeout($(dropdownDiv).data('timeoutId1'));
+             clearTimeout($(dropdownDiv).data('timeoutId2'));
+             YAAI.log("clearing timeouts... button");
+         })
+         .on("mouseleave", function () {
+             var timeoutId1 = setTimeout(hideDropDown,600);
+             $(dropdownDiv).data('timeoutId1', timeoutId1);
+             YAAI.log("set timeouts... button");
+         });
 
         // This is for mouse events over the actual dropdowns...
-        $(dropdownDiv).mouseleave(function() { var timeoutId2 = setTimeout(hidepanel, 600); $(dropdownDiv).data('timeoutId2', timeoutId2); console.log("set timeouts... div"); });
-        $(dropdownDiv).mouseenter(function() { clearTimeout($(dropdownDiv).data('timeoutId1')); clearTimeout($(dropdownDiv).data('timeoutId2')); console.log("clearing timeouts... div"); } );
+        $(dropdownDiv).mouseleave(function() { var timeoutId2 = setTimeout(hideDropDown, 600); $(dropdownDiv).data('timeoutId2', timeoutId2); YAAI.log("set timeouts... div"); });
+        $(dropdownDiv).mouseenter(function() { clearTimeout($(dropdownDiv).data('timeoutId1')); clearTimeout($(dropdownDiv).data('timeoutId2')); YAAI.log("clearing timeouts... div"); } );
 
-
-        function hidepanel() {
-            // 2013-05-21: http://stackoverflow.com/questions/1273566/how-do-i-check-if-the-mouse-is-over-an-element-in-jquery
-            // Because IE8 doesn't support: ($(dropdownDiv).is(':hover') === false) {
-            // Had to do all the setTimeout and clearTimeout stuff above.  What makes this a little more complicated is there are two different
-            // div's we want to keep the dropdowns shown for... the button that makes them appear and the actual div that's shown.
-            $(dropdownDiv).slideUp();
+        function hideDropDown() {
+            YAAI.log("firing hideDropDown");
+            $(dropdownDiv).slideUp("fast");
         }
-
-
         // Here we show them all...
 
         if( window.yaai_relate_to_contact_enabled ) {
