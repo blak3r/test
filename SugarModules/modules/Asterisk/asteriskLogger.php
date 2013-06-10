@@ -553,7 +553,6 @@ while (true) {
                             dev_logString("Insert Outbound");
                             $callDirection = 'Outbound';
                             logLine("OUTBOUND state detected... $asteriskMatchInternal is astMatchInternal eChannel= " . $eChannel . ' eDestination=' . $eDestination . "\n");
-                            mysql_checked_query($query);
                         } else if (!preg_match($asteriskMatchInternal, $eChannel)) {
                             $userExtension = extractExtensionNumberFromChannel($eDestination);
                             if( $e['Event'] == 'Join' && !empty($e['Queue'])) {
@@ -620,6 +619,7 @@ while (true) {
                                 // TODO Fix
                                 callinize_push($inboundExtension,$tmpCallerID, $callRecordId, "+12026883230");
                             }
+                            */
 
                         }
                         mysql_checked_query($query);
@@ -2308,15 +2308,15 @@ function logLine($str, $logFile = "default") {
         else {
             $myFile = $logFile;
         }
-        try {
+      //  try {
             $fh = fopen($myFile, 'a');
             fwrite($fh, $str);
             fclose($fh);
-        }
-        catch(Exception $err) {
+      //  }
+      //  catch(Exception $err) {
             // ignore errors
-            print "Error: unable to logLine to $myFile: " . $err . '\n';
-        }
+      //      print "Error: unable to logLine to $myFile: " . $err . '\n';
+      //  }
     }
 }
 
@@ -2416,5 +2416,3 @@ function was_call_answered($id) {
         return 1;
     }
 }
-?>
-
