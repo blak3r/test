@@ -858,7 +858,10 @@ while (true) {
                                             'name' => 'asterisk_caller_id_c',
                                             'value' => $rawData['callerID']
                                         ),
-
+                                        array(
+                                            'name' => 'asterisk_call_id_c',
+                                            'value' => empty($rawData['asterisk_id2']) ? $rawData['asterisk_id'] : $rawData['asterisk_id2']
+                                        ),
                                         array(
                                             'name' => 'asterisk_user_extension_c',
                                             'value' => $direction['user_extension']
@@ -1051,6 +1054,10 @@ while (true) {
                                         array(
                                             'name' => 'asterisk_caller_id_c',
                                             'value' => $rawData['callerID']
+                                        ),
+                                        array(
+                                            'name' => 'asterisk_call_id_c',
+                                            'value' => $rawData['asterisk_id']
                                         ),
                                         array(
                                             'name' => 'asterisk_user_extension_c',
