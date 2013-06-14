@@ -42,8 +42,10 @@ require_once 'parse.php';
 // Debug flags
 //
 
+// IF FollowMe == 0, then call popups are lost after call is answered on a cell phone.
+// If FollowMe == 1, disadvantage is ...
 $FOLLOWME = 1;
-$dial_events_log = '/Applications/MAMP/htdocs/dial_events.html';
+$dial_events_log = '/var/logs/dial_events.html';
 $mysql_loq_queries = 0;
 $mysql_log_results = 0;
 $verbose_log = 0;
@@ -1705,8 +1707,8 @@ function decode_name_value_list(&$nvl) {
 function findSugarBeanByPhoneNumber($origPhoneNumber) {
 
     require_once("include/sugar_rest.php");
-    $url = 'http://localhost:8888/sugarcrm/custom/service/callinize/rest.php';
-    $sugar = new Sugar_REST($url,'admin','adF32wjkh');
+    $url = 'http://localhost:8888/sugarcrm/custom/service/callinize/rest.php'; // FIXME
+    $sugar = new Sugar_REST($url,'admin','adF32wjkh'); // FIXME
     $params = array();
     $params['phone_number'] = $origPhoneNumber;
     $params['module_order'] = "accounts,contacts,leads";

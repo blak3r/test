@@ -73,10 +73,10 @@ $manifest = array (
                    'description' => 'Integrates Asterisk telephony features into SugarCRM.',
                    'icon' => '',
                    'is_uninstallable' => true,
-                   'name' => 'Asterisk SugarCRM Connector',
-                   'published_date' => '2013-Jun-09 23:06',
+                   'name' => 'Callinize for SugarCRM/Asterisk',
+                   'published_date' => '2013-Jun-10 20:06',
                    'type' => 'module',
-                   'version' => '3.4.1',
+                   'version' => '3.4.3',
                    'remove_tables' => 'true',  /** This does absolutely nothing since our asterisk log table is created manually instead of as a bean **/
                    );
 
@@ -88,6 +88,10 @@ $installdefs = array (
                                     'from' => '<basepath>/SugarModules/modules/Asterisk',
                                     'to' => 'custom/modules/Asterisk',
                                     ),
+                              array (
+                                  'from' => '<basepath>/SugarModules/service/callinize',
+                                  'to' => 'custom/service/callinize',
+                              ),
 									
 							/** UNCOMMENT THIS SECTION IF YOU WANT TO OVERWRITE YOUR USER CUSTOMIZATIONS
 					         array (
