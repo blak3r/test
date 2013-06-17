@@ -37,7 +37,7 @@ class Sugar_REST {
      * Variable:	$password
      * Description:	The password for the $username SugarCRM account
      */
-    private $password = "adF32wjkh";
+    private $password = "";
 
 
     ////////////////////////////////////////

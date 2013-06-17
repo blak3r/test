@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+	Alertus Desktop Alert Configuration File
+	After saving changes to this file you must restart the application for changes to take affect
+	For a complete reference of configuration options see:
+	    http://support.alertustech.com/wiki/Desktop_Alert_Configuration_Options (login required)
+
+  Updated: 1/16/2013 (CNU)
+-->
+<configuration>
+    <configSections>
+        <sectionGroup name="userSettings"
+                      type="System.Configuration.UserSettingsGroup, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+            <section name="eEASDesktopAlert.Settings1"
+                     type="System.Configuration.ClientSettingsSection, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+                     allowExeDefinition="MachineToLocalUser" requirePermission="false" />
+        </sectionGroup>
+        <sectionGroup name="applicationSettings"
+                      type="System.Configuration.ApplicationSettingsGroup, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+            <section name="eEASDesktopAlert.Settings1"
+                     type="System.Configuration.ClientSettingsSection, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+                     requirePermission="false" />
+        </sectionGroup>
+    </configSections>
+
+    <!-- User Settings -->
+    <userSettings>
+        <eEASDesktopAlert.Settings1>
+            <!-- TEST MODE -->
+            <!-- Enables functionality that is helpful when configuring the client.  Remember to set to False in production -->
+            array( "name" => "TestMode", "type" => "String", "value" => "True" ),
+
+            <!-- DEBUG SETTINGS -->
+            <!-- Set these to True when debugging a client problem, otherwise set to False -->
+            array( "name" => "LoggingEnabled", "type" => "String", "value" => "True" ),
+            array( "name" => "VerboseErrorMode", "type" => "String", "value" => "False" ),
+
+            <!-- Should the application run on startup -->
+            array( "name" => "RunOnStartup", "type" => "String", "value" => "True" ),
+    </eEASDesktopAlert.Settings1>
+    </userSettings>
+
+    <!-- Application Settings -->
+    <applicationSettings>
+        <eEASDesktopAlert.Settings1>
+            <!-- ALERTUS REMOTE SERVER SETTINGS -->
+            array( "name" => "AlertusServerHostname", "type" => "String", "value" => "192.168.0.177" ),
+            array( "name" => "AlertusServerPort", "type" => "String", "value" => "80" ),
+
+            <!-- LOOK AND FEEL SETTINGS -->
+            <!-- Controls the layout and customization of the application for your organization -->
+            array( "name" => "AboutApplicationTitle", "type" => "String", "value" => "About This Application..." ),
+            array( "name" => "AboutApplicationBody", "type" => "String", "value" => " This application allows important emergency alert information to override your digital signage content" ),
+            array( "name" => "AlertSystemLabel", "type" => "String", "value" => "Emergency Alert" ),
+            array( "name" => "ConfirmApplicationExitText", "type" => "String", "value" => "Are you sure you want to close this program? This application was designed to always run in the background. If you exit, you will not receive emergency alerts." ),
+            array( "name" => "DefaultMsgText", "type" => "String", "value" => "SYSTEM TEST of the Alertus emergency alert system. NO ACTION IS NEEDED. In a real emergency, important alert information will be displayed here." ),
+            array( "name" => "Logo1XOffset", "type" => "String", "value" => "10" ),
+            array( "name" => "Logo1YOffset", "type" => "String", "value" => "10" ),
+
+            <!-- APPLICATION BEHAVIOR -->
+            <!-- Controls how the application functions and behaves -->
+            array( "name" => "ShowInSystemTray", "type" => "String", "value" => "True" ),
+            array( "name" => "ShowInSystemTrayOnlyWhenError", "type" => "String", "value" => "False" ),
+            array( "name" => "AllowUserToDisableRunOnStartup", "type" => "String", "value" => "False" ),
+            array( "name" => "AllowUserToExitTheApplication", "type" => "String", "value" => "True" ),
+
+            <!-- Client Name sets the name which will appear in Alertus System for configuring/reporting purposes -->
+            array( "name" => "ClientNamePrefix", "type" => "String", "value" => "CableTV_" ),
+            array( "name" => "ClientName", "type" => "String", "value" => "{ComputerName}" ),
+            array( "name" => "ClientNameSuffix", "type" => "String", "value" => "_{DateTimeStamp}" ),
+
+
+            <!-- Fonts, Colors, etc -->
+            array( "name" => "ClientBorderColor", "type" => "String", "value" => "Red" ),
+            array( "name" => "TextBackgroundColor", "type" => "String", "value" => "Gold" ),
+            array( "name" => "TextForegroundColor", "type" => "String", "value" => "Black" ),
+            array( "name" => "SubjectText", "type" => "String", "value" => "ALERT!" ),
+            array( "name" => "SubjectTextForegroundColor", "type" => "String", "value" => "Red" ),
+            array( "name" => "DismissButtonForegroundColor", "type" => "String", "value" => "Black" ),
+            array( "name" => "DismissButtonBackgroundColor", "type" => "String", "value" => "LimeGreen" ),
+            array( "name" => "ClientBackgroundColor", "type" => "String", "value" => "White" ),
+            array( "name" => "ClientForegroundColor", "type" => "String", "value" => "Black" ),
+            array( "name" => "SubjectTextFontFamily", "type" => "String", "value" => "Verdana,Arial" ),
+            array( "name" => "EASTextFontFamily", "type" => "String", "value" => "Impact,Arial" ),
+            array( "name" => "TextFontFamily", "type" => "String", "value" => "Microsoft Sans Serif" ),
+            array( "name" => "DismissButtonTextFontFamily", "type" => "String", "value" => "Verdana" ),
+            array( "name" => "MessageReceivedPrefix", "type" => "String", "value" => "Message Sent:" ),
+            array( "name" => "MessageReceivedUserInitiated", "type" => "String", "value" => "User-Initiated Test" ),
+
+
+
+
+            <!-- **********************[IF RELEASE_DIGITAL_SIGNAGE_OVERRIDE]********************************** -->
+
+            <!-- How long should it display the message in seconds, set to -1 if it should go as long as Alertus Server dictates. -->
+            array( "name" => "MaxDisplayTimeSeconds", "type" => "String", "value" => "-1" ),
+
+            <!-- Digital Signage Override Only Properties -->
+            <!-- Additional Settings -->
+            array( "name" => "DeviceType", "type" => "String", "value" => "CableTVOverride" ),
+            array( "name" => "ForceMinimizeExternalApplication", "type" => "String", "value" => "" ),
+            array( "name" => "KeepOnTop", "type" => "String", "value" => "True" ),
+            array( "name" => "KeepOnTopInterval", "type" => "String", "value" => "10" ),
+            array( "name" => "UseScrollMessageMode", "type" => "String", "value" => "True" ),
+            array( "name" => "TextScrollDistance", "type" => "String", "value" => "7" ),
+            array( "name" => "TextScrollSpeed", "type" => "String", "value" => "10" ),
+
+            <!-- Digital Signage Override Only Properties.  -->
+            <!-- ADVANCED COMMUNICATION SETTINGS -->
+            array( "name" => "SerialDevice_ControlEnabled", "type" => "String", "value" => "True" ),
+            array( "name" => "SerialDeviceComPort", "type" => "String", "value" => "COM1" ),
+            array( "name" => "SerialDeviceBaudRate", "type" => "String", "value" => "115200" ),
+            array( "name" => "SerialDevice_CmdStringFormat", "type" => "String", "value" => "DEC" ),
+            array( "name" => "SerialDeviceMultipleCommandMode", "type" => "String", "value" => "True" ),
+            <!-- Activate Command String -->
+            array( "name" => "SerialDeviceActivateCmdString", "type" => "String", "value" => "254 130 1" ),
+            <setting name="SerialDeviceActivateCmdStringExpectedResponse"
+                     serializeAs="String">
+                <value>85</value>
+            </setting>
+            <!-- Deactivate Command Strings-->
+            array( "name" => "SerialDeviceDeactivateCmdString", "type" => "String", "value" => "254 129 1" ),
+            array( "name" => "SerialDeviceDeactivateCmdStringExpectedResponse", "type" => "String", "value" => "85" ),
+            <!-- Init Command Strings (generally they are the same as Deactivate) -->
+            array( "name" => "SerialDeviceInitCmdString", "type" => "String", "value" => "254 129 1" ),
+            array( "name" => "SerialDeviceInitCmdStringExpectedResponse", "type" => "String", "value" => "85" ),
+            <!-- Periodic Test Command String -->
+            array( "name" => "SerialDeviceTestString", "type" => "String", "value" => "254 34" ),
+            array( "name" => "SerialDeviceTestStringExpectedResponse", "type" => "String", "value" => "1" ),
+
+            <!--- AUDIO Behavior (DSO Only) -->
+            array( "name" => "AudioMode", "type" => "String", "value" => "TTS" ),
+            array( "name" => "AudioRepeatTimes", "type" => "String", "value" => "3" ),
+            array( "name" => "AudioRepeatDelay", "type" => "String", "value" => "5000" ),
+
+
+
+
+
+
+            <!-- ************************[ END OF INCLUDE ]********************************* -->
+        </eEASDesktopAlert.Settings1>
+    </applicationSettings>
+</configuration>

@@ -258,6 +258,8 @@ if ($argc > 1 && $argv[1] == "test") {
 
     logLine("Old / New: $dur_oldMethod  $dur_newMethod");
 
+    print_r(findSugarBeanByPhoneNumber("7607058888") );
+
     $obj = findSugarObjectByPhoneNumber("4108464565");
     print "findUserByAsteriskExtension(51) returned: " . findUserByAsteriskExtension("51") . "\n";
     print "findUserByAsteriskExtension(207) returned: " . findUserByAsteriskExtension("207") . "\n";
@@ -603,6 +605,9 @@ while (true) {
                             $callDirection = 'Inbound';
                             dev_logString("Insert Inbound");
                             logLine("Inbound state detected... $asteriskMatchInternal is astMatchInternal eChannel= " . $eChannel . ' eDestination=' . $eDestination . "\n");
+
+                            callinize_push($inboundExtension,$tmpCallerID, $callRecordId, $userExtension);
+                            //callinize_push($inboundExtension,$tmpCallerID, $callRecordId, "+14102152497");
 
                             /*
                             if( $inboundExtension == "211" || $inboundExtension == "52") {
@@ -1286,6 +1291,9 @@ exit(0);
             logLine(getTimeStamp() . "Last Push was $duration secs ago");
 			mt_start();
 
+            $beans = findSugarBeanByPhoneNumber($phone_number);
+
+            /*
             $assocAccount = findSugarAccountByPhoneNumber($phone_number);
             if ($assocAccount != FALSE) {
                 logLine("Found a matching account, relating to account instead of contact\n");
@@ -1300,31 +1308,59 @@ exit(0);
             }
             // FIXME doesn't handle multiple matching contacts right now.
             logLine(" Details:  callId:" . $call_record_id . " beanId:" . $beanID . " " . $beanType . " x" . $inboundExtension . " targetPhone: " . $cell_number);
+            */
 
-            // GET Contact Info
-            $sql = "select contacts.*, accounts.name from contacts left join accounts_contacts on contacts.id = accounts_contacts.contact_id left join accounts on accounts_contacts.account_id = accounts.id where contacts.id = '$beanID'";
-            $queryResult = mysql_checked_query($sql);
-            if ($queryResult === FALSE) {
-                logLine("! Contact lookup failed");
-                return FALSE;
-            }
-            else {
-                $row = mysql_fetch_assoc($queryResult);
-				
-				$emailSql = "select email_addresses.email_address from email_addr_bean_rel left join email_addresses on email_addr_bean_rel.email_address_id = email_addresses.id where email_addr_bean_rel.bean_id = '" . $row['id'] . "'";
-				logLine("Email SQL: " . $emailSql);
-				$queryEmailResult = mysql_checked_query($emailSql);
-				$emailRow = mysql_fetch_assoc($queryEmailResult);
-            }
-			
 
-			$dur_search = mt_end();
-
-            // TODO Finalize exactly what we let the backend handle... $body below is all the contact info.
-            $body = json_encode($row);
+            print_r($beans);
 
             $c = array();
+            $c['contactCount'] = count($beans);
+            if( $beans == null || count($beans) == 0 ) {
+                $c['callerName'] = "Not in CRM";
+                $c['contactCount'] = 0; // Might not be needed
+            }
+            else if( count($beans) == 1 ) {
 
+                //------[ GET Contact Info ]---------------------------//
+                $sql = "select contacts.*, accounts.name from contacts left join accounts_contacts on contacts.id = accounts_contacts.contact_id left join accounts on accounts_contacts.account_id = accounts.id where contacts.id = '$beanID'";
+                $queryResult = mysql_checked_query($sql);
+                if ($queryResult === FALSE) {
+                    logLine("! Contact lookup failed");
+                    return FALSE;
+                }
+                else {
+                    $row = mysql_fetch_assoc($queryResult);
+
+                    $emailSql = "select email_addresses.email_address from email_addr_bean_rel left join email_addresses on email_addr_bean_rel.email_address_id = email_addresses.id where email_addr_bean_rel.bean_id = '" . $row['id'] . "'";
+                    logLine("Email SQL: " . $emailSql);
+                    $queryEmailResult = mysql_checked_query($emailSql);
+                    $emailRow = mysql_fetch_assoc($queryEmailResult);
+                }
+                logLine( print_r($row,true) );
+                $callerName = $row['first_name'] . " " . $row['last_name'];
+                $callerAccountName = empty($row['name']) ? $row['department'] : $row['name'];  // TODO remove department here.
+                $c['callerName'] = $callerName;
+                $c['callerAccountName'] = $callerAccountName;
+                $c['callerShortInfo'] = $row['description']; // TODO change this to be the last note logged.
+                $c['callerDescription'] = $row['description'];
+                $c['callerEmail'] =  $emailRow['email_address'];//"todo@todotown.com";
+                $c['callerTitle'] = $row['title'];
+                $c['callerCrmId'] = $row['id'];
+            }
+            // Greater then 1 case
+            else {
+                $c['callerName'] = "Multiple Matches in CRM";
+
+                $contactsList = "";
+                foreach($beans as $index => $b) {
+                    $contactsList .= "\n{$b['name']}";
+                }
+
+                $c['callerShortInfo'] = $contactsList; // TODO change this to be the last note logged.
+                $c['callerDescription'] = $contactsList;
+            }
+
+			$dur_search = mt_end();
             // Actions
             $c['action'] = 'add';
             $c['send_push'] = 'true';
@@ -1333,46 +1369,36 @@ exit(0);
             $c['organizationId'] =  $sugar_config['asterisk_callinize_api_organizationId'];
             $c['organizationSecret'] = $sugar_config['asterisk_callinize_api_organizationSecret'];
 
-
             // Call Table Stuff
-            $c['callerName'] = $row['first_name'] . " " . $row['last_name'];
-            $c['callerAccountName'] = empty($row['name']) ? $row['department'] : $row['name'];  // TODO remove department here.
-            $c['callerShortInfo'] = $row['description']; // TODO change this to be the last note logged.
-			$c['callerDescription'] = $row['description'];
-			//$c['callerLongInfo'] = 
-			$c['callerEmail'] =  $emailRow['email_address'];//"todo@todotown.com";
-            $c['callerTitle'] = $row['title'];
-            $c['callerCrmId'] = $row['id'];
             $c['crmCallRecordId'] = $call_record_id;
             $c['callerPhone'] = $phone_number;  // e164 TODO
             $c['userPhone'] = $cell_number; // e164 TODO
             $c['inboundExtension'] = $inboundExtension;
             //$c['provider'] = "parse";
 
-            logLine( print_r($row,true) );
 
-            // Creates the message for the push notification
-            if( !empty($row['first_name']) ) {
-                $pushMessage = "x$inboundExtension: {$row['first_name']} {$row['last_name']},{$row['title']}\n{$c['caller_account']}\n{$row['description']}";
-                $c['contactCount'] = 1;
-				$dur_opencnam = "N/A";
-            }
-            else {
-                require_once 'include/opencnam.php';
-                $opencnam = new opencnam($sugar_config['asterisk_opencnam_account_sid'], $sugar_config['asterisk_opencnam_auth_token']);
-                logLine(getTimeStamp() . " opencnam Start");
-                mt_start();
-                $callerid = $opencnam->fetch($phone_number);
-				$dur_opencnam = mt_end();
-                logLine(getTimeStamp() . " OpenCNAM took: " . $dur_opencnam);
-                $callerIdInfo = "";
-                if( !empty($callerid) ) {
-                    $callerIdInfo = "CallerID: " . $callerid;
-                }
-                $pushMessage = "x$inboundExtension: Not in CRM\n" . $callerIdInfo;
-                $c['contactCount'] = 0;
-            }
-            $c['message'] = $pushMessage;
+//            // Creates the message for the push notification
+//            if( !empty($row['first_name']) ) {
+//                $pushMessage = "x$inboundExtension: {$row['first_name']} {$row['last_name']},{$row['title']}\n{$c['caller_account']}\n{$row['description']}";
+//                $c['contactCount'] = 1;
+//				$dur_opencnam = "N/A";
+//            }
+//            else {
+//                require_once 'include/opencnam.php';
+//                $opencnam = new opencnam($sugar_config['asterisk_opencnam_account_sid'], $sugar_config['asterisk_opencnam_auth_token']);
+//                logLine(getTimeStamp() . " opencnam Start");
+//                mt_start();
+//                $callerid = $opencnam->fetch($phone_number);
+//				$dur_opencnam = mt_end();
+//                logLine(getTimeStamp() . " OpenCNAM took: " . $dur_opencnam);
+//                $callerIdInfo = "";
+//                if( !empty($callerid) ) {
+//                    $callerIdInfo = "CallerID: " . $callerid;
+//                }
+//                $pushMessage = "x$inboundExtension: Not in CRM\n" . $callerIdInfo;
+//                $c['contactCount'] = 0;
+//            }
+            $c['message'] = "Is this used at all? I think it's just for logging";
             $c['searchTime'] = intval($dur_search*1000);
 
             // Moved delay to parse
@@ -1712,10 +1738,10 @@ function decode_name_value_list(&$nvl) {
 
 
 function findSugarBeanByPhoneNumber($origPhoneNumber) {
-
+    global $sugar_config;
     require_once("include/sugar_rest.php");
-    $url = 'http://localhost:8888/sugarcrm/custom/service/callinize/rest.php'; // FIXME
-    $sugar = new Sugar_REST($url,'admin','adF32wjkh'); // FIXME
+    $url = $sugar_config["site_url"] .  '/custom/service/callinize/rest.php';
+    $sugar = new Sugar_REST($url,$sugar_config['asterisk_soapuser'], $sugar_config['asterisk_soappass']);
     $params = array();
     $params['phone_number'] = $origPhoneNumber;
     $params['module_order'] = "accounts,contacts,leads";

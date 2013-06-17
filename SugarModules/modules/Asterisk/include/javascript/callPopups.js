@@ -1134,7 +1134,35 @@ $(document).ready(function(){
     // or if ajax isn't in url --- include
     if( !isAjaxUiEnabled || SUGAR.ajaxUI.hist_loaded ) {
         YAAI.log('loading yaai...');
-            var loop = true;
-            YAAI.checkForNewStates(loop);
+        var loop = true;
+        YAAI.checkForNewStates(loop);
+
+        // -------[ START OF Callinize Pro Exclude ]------------//
+        if( !window.yaai_recordings_enabled ) {
+            //var callId = $('input[name="record"]', document.forms['DetailView']).attr('value');
+            var moduleName = $('input[name="module"]').attr('value');
+            var recordingDiv = $('.asterisk_call_recordings');   // Testing to see if div is on the view or not.
+            if( moduleName == "Calls" && recordingDiv.length > 0) {
+                var callId = $('input[name="record"]').attr('value');
+                var call = $.getJSON('index.php',
+                    {entryPoint: "AsteriskCallDownload", callId : callId, action: "doesRecordingExist"},
+                    function(data) {
+                        var theHtml = "N / A";
+                        //alert( data.found + " is data.found for record = " + callId);
+                        if( data != undefined &&  data.found ) {
+                            theHtml = "<a href='" + data.playUrl + "'><img src='custom/modules/Asterisk/include/images/play.png'></a>" +
+                                "<a href='" + data.downloadUrl + "'><img src='custom/modules/Asterisk/include/images/download.png'></a>";
+                        }
+                        else {
+                            theHtml = "N/A";
+                        }
+                        recordingDiv.html( theHtml );
+                    })
+                    //.done(function() { alert("second success"); })
+                    .fail(function() { alert("error"); })
+                    //.always(function() { alert("finished"); });
+            }
+        }
+         // ^^^^^^^[       END OF EXCLUDE           ]^^^^^^^^^^^^//
     }
 });

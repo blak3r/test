@@ -529,9 +529,32 @@ $installdefs = array (
                                     'ext3' => NULL,
                                     'ext4' => NULL,
                                     ),
+                          array (
+                                    'id' => 'Callsasterisk_record_c',
+                                    'name' => 'asterisk_record_c',
+                                    'label' => 'LBL_ASTERISK_RECORD"',
+                                    'comments' => NULL,
+                                    'help' => 'Specifies whether or this call recording should be available in Sugar.',
+                                    'module' => 'Calls',
+                                    'type' => 'bool',
+                                    'max_size' => '45',
+                                    'require_option' => '0',
+                                    'default_value' => 0,
+                                    'date_modified' => '2009-06-18 15:38:48',
+                                    'deleted' => '0',
+                                    'audited' => '0',
+                                    'mass_update' => '0',
+                                    'duplicate_merge' => '0',
+                                    'reportable' => '0',
+                                    'importable' => 'true',
+                                    'ext1' => NULL,
+                                    'ext2' => NULL,
+                                    'ext3' => NULL,
+                                    'ext4' => NULL,
+                                    ),
                              ),
-							 
-						"logic_hooks" => 
+
+						"logic_hooks" =>
 							array (
 								   array(
 								  'module' => '',

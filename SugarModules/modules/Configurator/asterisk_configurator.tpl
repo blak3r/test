@@ -94,7 +94,7 @@
 
     <tr valign=top>
         <td width="20%">
-            <a href="https://github.com/blak3r/yaai/wiki/User-Manual"><img src="custom/modules/Asterisk/include/documentation.png"> Link to Online Documentation</a>
+            <a href="https://github.com/blak3r/yaai/wiki/User-Manual"><img src="custom/modules/Asterisk/include/images/documentation.png"> Link to Online Documentation</a>
 
         <td width="40%" >
             <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
