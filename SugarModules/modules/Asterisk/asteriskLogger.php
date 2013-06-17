@@ -37,6 +37,7 @@
  *
  */
 
+
 require_once 'parse.php';
 //
 // Debug flags
@@ -246,6 +247,7 @@ if ($argc > 1 && $argv[1] == "test") {
     //$extensions = (51,52,207);
     $phones = array('4102152497', '4108464565', 'sdfasdf', '(267) 222-8385', '2672228385');
 
+    //callinize_push("211","7607058888","1234_abc" . time(),"211");
     print "Entered test mode!";
 
     mt_start();
@@ -1291,27 +1293,9 @@ exit(0);
             logLine(getTimeStamp() . "Last Push was $duration secs ago");
 			mt_start();
 
-            $beans = findSugarBeanByPhoneNumber($phone_number);
+            $beans = findSugarBeanByPhoneNumber($phone_number,true, true);
 
-            /*
-            $assocAccount = findSugarAccountByPhoneNumber($phone_number);
-            if ($assocAccount != FALSE) {
-                logLine("Found a matching account, relating to account instead of contact\n");
-                $beanID = $assocAccount['values']['id'];
-                $beanType = $assocAccount['type'];
-                $parentType = 'Accounts';
-                $parentID = $beanID;
-            } else {
-                $assoSugarObject = findSugarObjectByPhoneNumber($phone_number);
-                $beanID = $assoSugarObject['values']['id'];
-                $beanType = $assoSugarObject['type'];
-            }
-            // FIXME doesn't handle multiple matching contacts right now.
-            logLine(" Details:  callId:" . $call_record_id . " beanId:" . $beanID . " " . $beanType . " x" . $inboundExtension . " targetPhone: " . $cell_number);
-            */
-
-
-            print_r($beans);
+            print_r($beans); // TODO remove this debug.
 
             $c = array();
             $c['contactCount'] = count($beans);
@@ -1320,9 +1304,9 @@ exit(0);
                 $c['contactCount'] = 0; // Might not be needed
             }
             else if( count($beans) == 1 ) {
-
+                // FIXME -- Need to fix this in order to work with Leads or bean type of accounts...
                 //------[ GET Contact Info ]---------------------------//
-                $sql = "select contacts.*, accounts.name from contacts left join accounts_contacts on contacts.id = accounts_contacts.contact_id left join accounts on accounts_contacts.account_id = accounts.id where contacts.id = '$beanID'";
+                $sql = "select contacts.*, accounts.name from contacts left join accounts_contacts on contacts.id = accounts_contacts.contact_id left join accounts on accounts_contacts.account_id = accounts.id where contacts.id = '" . $beans[0]['bean_id'] . "'";
                 $queryResult = mysql_checked_query($sql);
                 if ($queryResult === FALSE) {
                     logLine("! Contact lookup failed");
@@ -1330,7 +1314,6 @@ exit(0);
                 }
                 else {
                     $row = mysql_fetch_assoc($queryResult);
-
                     $emailSql = "select email_addresses.email_address from email_addr_bean_rel left join email_addresses on email_addr_bean_rel.email_address_id = email_addresses.id where email_addr_bean_rel.bean_id = '" . $row['id'] . "'";
                     logLine("Email SQL: " . $emailSql);
                     $queryEmailResult = mysql_checked_query($emailSql);
@@ -1353,7 +1336,7 @@ exit(0);
 
                 $contactsList = "";
                 foreach($beans as $index => $b) {
-                    $contactsList .= "\n{$b['name']}";
+                    $contactsList .= "{$b['bean_name']} ";
                 }
 
                 $c['callerShortInfo'] = $contactsList; // TODO change this to be the last note logged.
@@ -1410,7 +1393,7 @@ exit(0);
             logLine( print_r($c, true) );
             $parse = new ParseBackendWrapper();
             mt_start();
-			
+
 		
             $add_call_resp = $parse->customCodeMethod('manage_calls', $c);
 			$dur_parse = mt_end();
@@ -1736,8 +1719,17 @@ function decode_name_value_list(&$nvl) {
     return $result;
 }
 
-
-function findSugarBeanByPhoneNumber($origPhoneNumber) {
+/**
+ *
+ * @param $origPhoneNumber
+ * @param bool $stopOnFind -Controls whether or not to keep searching down the list of modules to find a match...
+ *                          For example, if a match in contacts is found... it will not try leads.
+ * @param bool $returnMultipleMatches - when true it returns all matches (callinize push uses true, unattended will return false)
+ *                                      think of this as attended vs. unattended mode... true it returns all the matches to the user so
+ *                                      they can see all the results.
+ * @return An|array|null
+ */
+function findSugarBeanByPhoneNumber($origPhoneNumber,$stopOnFind=false, $returnMultipleMatches=false) {
     global $sugar_config;
     require_once("include/sugar_rest.php");
     $url = $sugar_config["site_url"] .  '/custom/service/callinize/rest.php';
@@ -1745,13 +1737,13 @@ function findSugarBeanByPhoneNumber($origPhoneNumber) {
     $params = array();
     $params['phone_number'] = $origPhoneNumber;
     $params['module_order'] = "accounts,contacts,leads";
-    $params['stop_on_find'] = true;
+    $params['stop_on_find'] = $stopOnFind;
     $beans = $sugar->custom_method("find_beans_with_phone_number", $params);
 
     $retVal = null;
 
     if( count($beans) == 1 ) {
-        $retVal = $beans[0];
+        $retVal = $beans; // Do not return beans[0]!
     }
     else if( count($beans) > 1 ) {
         // Check if all beans are from the same parent
@@ -1765,6 +1757,12 @@ function findSugarBeanByPhoneNumber($origPhoneNumber) {
         }
         if( $moreThanOneParent ) {
             logLine("Found Multiple matching beans and they have different parents.  Logging to noone");
+            if( $returnMultipleMatches ) {
+                $retVal = $beans;
+            }
+            else {
+                $retVal = null;
+            }
         }
         else {
             logLine("Found multiple matching beans but they all share the same parent.  Logging to parent");
